@@ -1,0 +1,18 @@
+name: daily-audit
+on:
+  schedule: [{cron: "17 5 * * *"}]
+  workflow_dispatch:
+permissions: {contents: write}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python -m unittest discover -s tests
+      - run: python src/daily.py
+        env: {PAY_URL: "${{ vars.PAY_URL }}", SITE_BASE: "${{ vars.SITE_BASE }}"}
+      - run: |
+          git config user.name bot; git config user.email bot@users.noreply.github.com
+          git add -A && (git commit -m "daily audit $(date -I)" && git push) || echo "nothing to commit"
